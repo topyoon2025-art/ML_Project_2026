@@ -6,12 +6,22 @@ Github Page for ML 2026 Spring Project
 - Introduction v1: Over the past decade, rapid advances in machine learning have led to the development of numerous high‑performing image classification models. Ensuring the safety, reliability, and robustness of these models remains a central challenge, especially as they are deployed in increasingly sensitive real‑world applications. To support this effort, we explore the use of perturbed (adversarial) images as a way to evaluate how well existing models withstand intentional, carefully crafted disruptions. There are many established methods for generating adversarial image attacks. In this project, we begin with the Fast Gradient Sign Method (FGSM) to establish a baseline and understand current practices. From there, we extend our investigation to modified versions of FGSM designed to increase the effectiveness of the perturbations and more clearly expose model weaknesses. If these approaches prove successful, we plan to explore combinations of different adversarial attack techniques to simulate a wider range of challenging conditions (i.e blackbox, whitebox) and further stress‑test model robustness. This approach is analogous to penetration testing in cybersecurity, where controlled attacks are used to strengthen the overall safety and security of a system.
 
 - Dataset and Features
-  * Image Dataset   
+  * Image Dataset
+    * Which Dataset 
+  * Features
+    * Low, Mid, High, Global
+       
 - Method
   * Image Classifier: CNN (VIT, RNN options) based classifier ->Use this for the baseline and experiment
   * Attack Method:
     * FGSM
     * Modified FGSM
     * PGD
-    * Combined method    
+    * etc
+    * Combined method
+   
+- Deliverables
+  * Must achieve: Modified FGSM more effective than regular FGSM in exposing the weaknesses of the existing model
+  * Expect to achieve: Dynamic integration of varying attack methods to fit to the given conditions
+  * Would like to: GAN doesn't detect (or good escape rate) the purturbed images as adversarial attack images.  
 
