@@ -21,7 +21,7 @@ Github Page for ML 2026 Spring Project
     * Combined method
    
 - Deliverables
-  * Must achieve: Modified FGSM more effective than regular FGSM in exposing the weaknesses of the existing model
-  * Expect to achieve: Dynamic integration of varying attack methods to fit to the given conditions
+  * Must achieve: Modified FGSM more effective than regular FGSM in exposing the weaknesses of the existing models
+  * Expect to achieve: Dynamic integration of varying attack methods to fit to the given conditions such as blackbox or whitebox
   * Would like to: GAN doesn't detect (or good escape rate) the purturbed images as adversarial attack images.  
 
