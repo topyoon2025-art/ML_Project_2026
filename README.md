@@ -21,7 +21,7 @@
     - alpha = epsilon / 4, used for BGD
     - Criterion: Cross Entropy Loss
     - Can choose between FGSM and BGD
-    - Produces: (preliminary results)
+    - Results: (preliminary results)
       - Clean accuracy: ~98%
       - Adversaril accuracy:
         - FGSM: ~25%
