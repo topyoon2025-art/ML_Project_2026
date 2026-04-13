@@ -6,6 +6,8 @@
    - Resized to (C, H, W) -> (3, 224, 224) for Resnet-18
    - Letterbox resizing while preserving aspect ratio and maintain the same H and W across all images with padding
    - Normalized by dividing with 255
+   - Training set: 39209
+   - Test set: 12630
  - Trained the classifier via whitebox_train.py:
    - Resnet-18:
      - Modified last layer to fit to 43 classes
