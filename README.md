@@ -29,12 +29,12 @@
       - Attack success rate:
         - FGSM: ~25%
         - PGD: ~50%
-    - Run whitebox_train.py to train the model
-      -  Once train is done, "resnet18_gtsrb.pth" will be produced in the same folder.  Need to load "resnet18_gtsrb.pth" for whitebox_attack.py.
-      -  Adjust epochs as needed
-    - Run whitebox_attack.py
-      -  Run either FGSM or PGD by assigning attack = "FGSM" or "PGD"
-      -  Produces clean, adv (FGSM and PGD) accuracies as well as attack success rate
+ - Run whitebox_train.py to train the model
+   - Once train is done, "resnet18_gtsrb.pth" will be produced in the same folder.  Need to load "resnet18_gtsrb.pth" for whitebox_attack.py.
+   - Adjust epochs as needed
+ - Run whitebox_attack.py
+   -  Run either FGSM or PGD by assigning attack = "FGSM" or "PGD"
+   -  Produces clean, adv (FGSM and PGD) accuracies as well as attack success rate
         
 
 
