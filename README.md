@@ -22,9 +22,13 @@
     - Criterion: Cross Entropy Loss
     - Can choose between FGSM and BGD
     - Produces: (preliminary results)
-      - Clean accuracy: 
+      - Clean accuracy: ~98%
       - Adversaril accuracy:
-      - Attack success rate: 
+        - FGSM: ~25%
+        - PGD: ~50%
+      - Attack success rate:
+        - FGSM: ~25%
+        - PGD: ~50%
         
 
 
