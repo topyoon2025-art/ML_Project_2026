@@ -24,7 +24,7 @@
     - Results: (preliminary results)
       - Clean accuracy: ~98%
       - Adversaril accuracy:
-        - FGSM: ~25%
+        - FGSM: ~75%
         - PGD: ~50%
       - Attack success rate:
         - FGSM: ~25%
