@@ -1,3 +1,37 @@
+# Update 13 Apr 26
+ - Download GTSRB dataset via https://livejohnshopkins-my.sharepoint.com/:f:/r/personal/jyoon72_jh_edu/Documents/Machine%20Learning/Project/GTSRB?e=5%3a76984bbc09094ce4aa8d271e45f4d95f&sharingv2=true&fromShare=true&at=9&xsdata=MDV8MDJ8anlvb243MkBqaC5lZHV8NWJlY2E2MDM1MjYzNDQ3ODBmODEwOGRlOTk2YzAyYmV8OWZhNGY0MzhiMWU2NDczYjgwM2Y4NmY4YWVkZjBkZWN8MHwwfDYzOTExNjg4NjM1NDI1NTc1N3xVbmtub3dufFRXRnBiR1pzYjNkOGV5SkZiWEIwZVUxaGNHa2lPblJ5ZFdVc0lsWWlPaUl3TGpBdU1EQXdNQ0lzSWxBaU9pSlhhVzR6TWlJc0lrRk9Jam9pVFdGcGJDSXNJbGRVSWpveWZRPT18MHx8fA%3d%3d&sdata=dHhUVWNSaGJMdmZySTN6WDRtLzZKbmw5NmJiMTNOVDh3K2JVbitBQW4rST0%3d
+ 
+ - Dataset: GTSRB
+   - 43 classes  
+   - Resized to (C, H, W) -> (3, 224, 224) for Resnet-18
+   - Letterbox resizing while preserving aspect ratio and maintain the same H and W across all images with padding
+   - Normalized by dividing with 255
+ - Trained the classifier via whitebox_train.py:
+   - Resnet-18:
+     - Modified last layer to fit to 43 classes
+     - Using pretained model with imagenet (comes with mean and std that we need to use for our image normalization)
+     - Trained the model with epochs = 5 (each epoch took about 30-40 minuets)
+     - Train batch size: 32
+     - Criterion: Cross Entropy Loss
+     - Optimizer: Adam with lr = 0.001
+     - Trained model saved as resnet18_gtsrb.pth in Whitebox folder
+  - Implemented FGSM and PGD via whtiebox_attack.py in Whitebox folder
+    - Epsilon = 0.03
+    - alpha = epsilon / 4, used for BGD
+    - Criterion: Cross Entropy Loss
+    - Can choose between FGSM and BGD
+    - Produces: (preliminary results)
+      - Clean accuracy: 
+      - Adversaril accuracy:
+      - Attack success rate: 
+        
+
+
+
+
+
+
+
 # ML_Project_2026 Proposal
 Github Page for ML 2026 Spring Project
 
