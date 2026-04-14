@@ -11,6 +11,8 @@ import numpy as np
 from PIL import Image
 import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
+import os
+import cv2
 
 
 #FGSM attack implementation
@@ -81,13 +83,12 @@ def readTrafficSigns(rootpath):
     Returns:   list of images, list of corresponding labels'''
     images = [] # images, initially empty
     labels = [] # corresponding labels, initially empty
-
-    gtFile = open(rootpath + '/' + 'GT-final_test.csv')
+    gtFile = open(os.path.join(rootpath, 'GT-final_test.csv'), 'r')
     gtReader = csv.reader(gtFile, delimiter=';') # csv parser for annotations file
     next(gtReader) # skip header
     # loop over all images in current annotations file
     for row in gtReader:
-        images.append(plt.imread(rootpath + '/' + row[0])) # the 1th column is the filename
+        images.append(cv2.imread(os.path.join(rootpath, row[0]))) # the 1th column is the filename
         labels.append(row[7]) # the 8th column is the label
     gtFile.close()
 
@@ -158,7 +159,8 @@ class GTSRBDataset(Dataset):
 
 
 print("Reading testing data")
-path = 'GTSRB/Test/Final_Test/Images'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+path = os.path.join(BASE_DIR, 'GTSRB/Test/Final_Test/Images')
 testImages, testLabels = readTrafficSigns(path) 
 
 ###############################################
@@ -171,7 +173,7 @@ print(f"Example image shape after preprocessing: {test_dataset[0][0].shape}, lab
 # Model setup
 model = resnet18(weights=ResNet18_Weights.DEFAULT)
 model.fc = nn.Linear(model.fc.in_features, 43) # 43 classes in GTSRB
-model.load_state_dict(torch.load('resnet18_gtsrb.pth'))
+model.load_state_dict(torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb.pth')))  # Load the trained model weights
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.eval()
 model.to(device)
@@ -180,8 +182,8 @@ epsilon = 0.03
 alpha = epsilon / 4
 num_steps = 10
 criterion = nn.CrossEntropyLoss()
-# attack = "FGSM"  
-attack = "PGD"  
+attack = "FGSM"  
+# attack = "PGD"  
 # Generate adversarial examples for all test samples and extract true labels for evaluation
 examples_adv = []
 true_labels = []

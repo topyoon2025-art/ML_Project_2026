@@ -1,6 +1,9 @@
 # The German Traffic Sign Recognition Benchmark
 #
-# sample code for reading the traffic sign images and the
+# sample code for reading the traffic sign 
+# 
+# 
+# images and the
 # corresponding labels
 #
 # example:
@@ -25,6 +28,8 @@ import numpy as np
 from PIL import Image
 import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
+import os
+import cv2
 
 # function for reading the images
 # arguments: path to the traffic sign data, for example './GTSRB/Training'
@@ -37,13 +42,13 @@ def readTrafficSigns(rootpath):
     labels = [] # corresponding labels, initially empty
     # loop over all 42 classes
     for c in range(0,43):
-        prefix = rootpath + '/' + format(c, '05d') + '/' # subdirectory for class
-        gtFile = open(prefix + 'GT-'+ format(c, '05d') + '.csv') # annotations file
+        prefix = os.path.join(rootpath, format(c, '05d'), '') # subdirectory for class
+        gtFile = open(os.path.join(prefix, 'GT-' + format(c, '05d') + '.csv'), 'r') # annotations file
         gtReader = csv.reader(gtFile, delimiter=';') # csv parser for annotations file
         next(gtReader) # skip header
         # loop over all images in current annotations file
         for row in gtReader:
-            images.append(plt.imread(prefix + row[0])) # the 1th column is the filename
+            images.append(cv2.imread(os.path.join(prefix, row[0]))) # the 1th column is the filename
             labels.append(row[7]) # the 8th column is the label
         gtFile.close()
     return images, labels
@@ -113,7 +118,8 @@ class GTSRBDataset(Dataset):
 
 
 print("Reading training data")
-path = 'GTSRB/Training/Final_Training/Images'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+path = os.path.join(BASE_DIR, 'GTSRB/Training/Final_Training/Images')
 trainImages, trainLabels = readTrafficSigns(path) #39209, 39209
 
 ###############################################
@@ -153,6 +159,6 @@ for epoch in range(epochs):
         optimizer.step()
     print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}')
 
-torch.save(model.state_dict(), 'resnet18_gtsrb.pth')
+torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb.pth'))
 print("Training complete. Model saved as resnet18_gtsrb.pth")
 
