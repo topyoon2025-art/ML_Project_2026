@@ -24,10 +24,10 @@
     - Results: (preliminary results)
       - Clean accuracy: ~98%
       - Adversaril accuracy:
-        - FGSM: ~75%
+        - FGSM: ~75-80%
         - PGD: ~50%
       - Attack success rate:
-        - FGSM: ~25%
+        - FGSM: ~20-25%
         - PGD: ~50%
  - Run whitebox_train.py to train the model
    - Once train is done, "resnet18_gtsrb.pth" will be produced in the same folder.  Need to load "resnet18_gtsrb.pth" for whitebox_attack.py.
