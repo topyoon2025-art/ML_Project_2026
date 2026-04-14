@@ -1,11 +1,12 @@
 # Update 13 Apr 26
- - Download GTSRB dataset via https://livejohnshopkins-my.sharepoint.com/:f:/r/personal/jyoon72_jh_edu/Documents/Machine%20Learning/Project/GTSRB?e=5%3a76984bbc09094ce4aa8d271e45f4d95f&sharingv2=true&fromShare=true&at=9&xsdata=MDV8MDJ8anlvb243MkBqaC5lZHV8NWJlY2E2MDM1MjYzNDQ3ODBmODEwOGRlOTk2YzAyYmV8OWZhNGY0MzhiMWU2NDczYjgwM2Y4NmY4YWVkZjBkZWN8MHwwfDYzOTExNjg4NjM1NDI1NTc1N3xVbmtub3dufFRXRnBiR1pzYjNkOGV5SkZiWEIwZVUxaGNHa2lPblJ5ZFdVc0lsWWlPaUl3TGpBdU1EQXdNQ0lzSWxBaU9pSlhhVzR6TWlJc0lrRk9Jam9pVFdGcGJDSXNJbGRVSWpveWZRPT18MHx8fA%3d%3d&sdata=dHhUVWNSaGJMdmZySTN6WDRtLzZKbmw5NmJiMTNOVDh3K2JVbitBQW4rST0%3d
- 
+ - Download GTSRB dataset to Whitebox folder via https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/jyoon72_jh_edu/IQBR6yDDbfQ0TrjVqHQyZNVPAa7FdF2yXnSah6D08IaXQXY?e=hO4hcw
  - Dataset: GTSRB
    - 43 classes  
    - Resized to (C, H, W) -> (3, 224, 224) for Resnet-18
    - Letterbox resizing while preserving aspect ratio and maintain the same H and W across all images with padding
    - Normalized by dividing with 255
+   - Training set: 39209
+   - Test set: 12630
  - Trained the classifier via whitebox_train.py:
    - Resnet-18:
      - Modified last layer to fit to 43 classes
@@ -20,10 +21,21 @@
     - alpha = epsilon / 4, used for BGD
     - Criterion: Cross Entropy Loss
     - Can choose between FGSM and BGD
-    - Produces: (preliminary results)
-      - Clean accuracy: 
+    - Results: (preliminary results)
+      - Clean accuracy: ~98%
       - Adversaril accuracy:
-      - Attack success rate: 
+        - FGSM: ~75-80%
+        - PGD: ~50%
+      - Attack success rate:
+        - FGSM: ~20-25%
+        - PGD: ~50%
+ - Run whitebox_train.py to train the model
+   - Once train is done, "resnet18_gtsrb.pth" will be produced in the same folder.  Need to load "resnet18_gtsrb.pth" for whitebox_attack.py.
+   - Adjust epochs as needed
+   - Trained model can be downloaded via https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/jyoon72_jh_edu/IQDWVCqjwVklQJJb7zLn3OpkAQDMxrDm49cfmOeuDxtpogY?e=Xzi5CN
+ - Run whitebox_attack.py
+   -  Run either FGSM or PGD by assigning attack = "FGSM" or "PGD"
+   -  Produces clean, adv (FGSM and PGD) accuracies as well as attack success rate
         
 
 
