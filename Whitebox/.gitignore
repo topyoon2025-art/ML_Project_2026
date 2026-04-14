@@ -1,0 +1,6 @@
+# Model weights
+*.pth
+*.pt
+
+# Dataset
+GTSRB/
