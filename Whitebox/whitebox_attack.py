@@ -160,7 +160,7 @@ class GTSRBDataset(Dataset):
 
 print("Reading testing data")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(BASE_DIR, 'GTSRB/Test/Final_Test/Images')
+path = os.path.join(BASE_DIR, 'GTSRB', 'Test', 'Final_Test', 'Images')
 testImages, testLabels = readTrafficSigns(path) 
 
 ###############################################
