@@ -22,13 +22,13 @@
     - Criterion: Cross Entropy Loss
     - Can choose between FGSM and BGD
     - Results: (preliminary results)
-      - Clean accuracy: ~98%
-      - Adversaril accuracy:
-        - FGSM: ~75-80%
-        - PGD: ~50-60%
+      - Clean accuracy: ~99%
+      - Adversarial accuracy:
+        - FGSM: 
+        - PGD: 
       - Attack success rate:
-        - FGSM: ~20-25%
-        - PGD: ~40-50%
+        - FGSM: 
+        - PGD: %
  - Run whitebox_train.py to train the model
    - Once train is done, "resnet18_gtsrb.pth" will be produced in the same folder.  Need to load "resnet18_gtsrb.pth" for whitebox_attack.py.
    - Adjust epochs as needed
