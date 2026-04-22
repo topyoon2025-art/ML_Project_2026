@@ -1,3 +1,97 @@
+# Update 21 Apr 26
+ - PGD results (can run for FGSM as well)
+   - Clean Trained Model (20 epochs, letterbox resizing)
+     - Clean Accuracy: 99.04%
+     - epsilon=0.0078
+       - Adversarial accuracy: 29.29%
+       - Attack Success Rate: 70.43%
+       - Successful attacks: 8810
+       - Initially correct samples: 12509
+     - epsilon=0.0157
+       - Adversarial accuracy: 6.17%
+       - Attack Success Rate: 93.77%
+       - Successful attacks: 11730
+       - Initially correct samples: 12509
+     - epsilon=0.0314
+       - Adversarial accuracy: 0.14%
+       - Attack Success Rate: 99.86%
+       - Successful attacks: 12491
+       - Initially correct samples: 12509
+     - epsilon=0.0627
+       - Adversarial accuracy: 0.00%
+       - Attack Success Rate: 100.00%
+       - Successful attacks: 12509
+       - Initially correct samples: 12509
+
+   - PGD Latent Trained Model (15 epochs, epsilon=0.2, half clean, half PGD latent (5 steps))
+     - Clean Accuracy: 99.27%
+     - epsilon=0.0078
+       - Adversarial accuracy: 57.85%
+       - Attack Success Rate: 41.73%
+       - Successful attacks: 5232
+       - Initially correct samples: 12538
+     - epsilon=0.0157
+       - Adversarial accuracy: 23.42%
+       - Attack Success Rate: 76.41%
+       - Successful attacks: 9580
+       - Initially correct samples: 12538
+     - epsilon=0.0314
+       - Adversarial accuracy: 2.98%
+       - Attack Success Rate: 96.99%
+       - Successful attacks: 12161
+       - Initially correct samples: 12538
+     - epsilon=0.0627
+       - Adversarial accuracy: 0.00%
+       - Attack Success Rate: 100.00%
+       - Successful attacks: 12538
+       - Initially correct samples: 12538
+
+- PGD Input Trained Model (15 epochs, epsilon=0.0314, half clean, half PGD input (10 steps))
+     - Clean Accuracy: 88.57%
+     - epsilon=0.0078
+       - Adversarial accuracy: 81.90%
+       - Attack Success Rate: 7.53%
+       - Successful attacks: 842
+       - Initially correct samples: 11186
+     - epsilon=0.0157
+       - Adversarial accuracy: 80.53%
+       - Attack Success Rate: 10.36%
+       - Successful attacks: 1159
+       - Initially correct samples: 11186
+     - epsilon=0.0314
+       - Adversarial accuracy: 66.98%
+       - Attack Success Rate: 24.88%
+       - Successful attacks: 2783
+       - Initially correct samples: 11186
+     - epsilon=0.0627
+       - Adversarial accuracy: 41.17%
+       - Attack Success Rate: 53.55%
+       - Successful attacks: 5990
+       - Initially correct samples: 11186
+
+- PGD Input and Latent Space Trained Model (15 epochs, epsilon=0.0314 for input (10 steps), epsilon=0.2 for latent space (5 steps), 1/3 clean, 1/3 PGD input, 1/3 PGD Latent)
+     - Clean Accuracy: 95.64%
+     - epsilon=0.0078
+       - Adversarial accuracy: 90.87%
+       - Attack Success Rate: 4.98%
+       - Successful attacks: 602
+       - Initially correct samples: 12079
+     - epsilon=0.0157
+       - Adversarial accuracy: 85.49%
+       - Attack Success Rate: 10.65%
+       - Successful attacks: 1286
+       - Initially correct samples: 12079
+     - epsilon=0.0314
+       - Adversarial accuracy: 69.98%
+       - Attack Success Rate: 26.83%
+       - Successful attacks: 3241
+       - Initially correct samples: 12079
+     - epsilon=0.0627
+       - Adversarial accuracy: 43.52%
+       - Attack Success Rate: 54.50%
+       - Successful attacks: 6583
+       - Initially correct samples: 12079
+         
 # Update 13 Apr 26
  - Download GTSRB dataset to Whitebox folder via https://livejohnshopkins-my.sharepoint.com/:u:/g/personal/jyoon72_jh_edu/IQBR6yDDbfQ0TrjVqHQyZNVPAa7FdF2yXnSah6D08IaXQXY?e=hO4hcw
  - Dataset: GTSRB
