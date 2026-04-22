@@ -1,23 +1,8 @@
-# The German Traffic Sign Recognition Benchmark
-#
-# sample code for reading the traffic sign 
-# 
-# 
-# images and the
-# corresponding labels
-#
-# example:
-#            
-# trainImages, trainLabels = readTrafficSigns('GTSRB/Training')
-# print len(trainLabels), len(trainImages)
-# plt.imshow(trainImages[42])
-# plt.show()
-#
-# have fun, Christian
+
+from xml.parsers.expat import model
 
 import matplotlib.pyplot as plt
 import csv
-
 #resnet18 for classification
 import torch
 from torch.utils.data import TensorDataset, DataLoader
@@ -29,136 +14,241 @@ from PIL import Image
 import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
 import os
-import cv2
+import utils
 
-# function for reading the images
-# arguments: path to the traffic sign data, for example './GTSRB/Training'
-# returns: list of images, list of corresponding labels 
-def readTrafficSigns(rootpath):
-    '''Reads traffic sign data for German Traffic Sign Recognition Benchmark.
-    Arguments: path to the traffic sign data, for example './GTSRB/Training'
-    Returns:   list of images, list of corresponding labels'''
-    images = [] # images, initially empty
-    labels = [] # corresponding labels, initially empty
-    # loop over all 42 classes
-    for c in range(0,43):
-        prefix = os.path.join(rootpath, format(c, '05d'), '') # subdirectory for class
-        gtFile = open(os.path.join(prefix, 'GT-' + format(c, '05d') + '.csv'), 'r') # annotations file
-        gtReader = csv.reader(gtFile, delimiter=';') # csv parser for annotations file
-        next(gtReader) # skip header
-        # loop over all images in current annotations file
-        for row in gtReader:
-            images.append(cv2.imread(os.path.join(prefix, row[0]))) # the 1th column is the filename
-            labels.append(row[7]) # the 8th column is the label
-        gtFile.close()
-    return images, labels
+def main():
+    print("Reading training data...")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(BASE_DIR, 'GTSRB/Training/Final_Training/Images')
+    trainImages, trainLabels = utils.readTrafficSigns_train(path) #39209, 39209
 
-def letterbox_resize(img, target_size=224, fill=0):
-    """
-    Letterbox resize for a single image tensor.
+    ###############################################
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #Preprocess the images and labels for training#
+    train_dataset = utils.GTSRBDataset(trainImages, trainLabels, target_size=224)
+    print(f"Total training samples: {len(train_dataset)}")
 
-    Args:
-        img (torch.Tensor): shape (3, H, W), float32 in [0, 1]
-        target_size (int): output height and width (square), 224x224 for ResNet-18
-        fill: padding color (0 = black), default is 0 for black padding
+    #Use the batch size of 32 or 64 for training
+    batch_size_train = 64
+    num_workers = 4
+    pin_memory = True
+    train_loader = DataLoader(train_dataset, 
+                            batch_size=batch_size_train, 
+                            shuffle=True,
+                            num_workers=num_workers,
+                            pin_memory=pin_memory)
 
-    Returns:
-        torch.Tensor: shape (3, target_size, target_size)
-    """
-    # img in shape of (C, H, W)
-    _, h, w = img.shape
+    #Initialization of the model, loss function, and optimizer
+    # Load the pre-trained ResNet-18 model with imagenet weights
+    num_classes = 43
+    # weights = ResNet18_Weights.DEFAULT
+    # model = resnet18(weights=weights) 
+    # model.fc = nn.Linear(model.fc.in_features, num_classes)
+  
+    model = utils.ResNet18_L3(num_classes=num_classes)
+    model = model.to(device)
+    print(f"Using device: {device}")
+    criterion = nn.CrossEntropyLoss() # Cross-entropy loss for classification
+    # Adam optimizer with weight decay for regularization 
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
-    # Compute scale while preserving aspect ratio
-    scale = min(target_size / w, target_size / h)
-    new_w = int(w * scale)
-    new_h = int(h * scale)
+    epochs = 20
 
-    # Resize image
-    img = F.resize(img, [new_h, new_w])  # (3, new_h, new_w)
+    # for epoch in range(epochs):
+    #     training_correct = 0
+    #     model.train() # Set model to training mode
+    #     for images, labels in train_loader:
+    #         images = images.to(device) # Send to GPU if available
+    #         labels = labels.to(device) # Send to GPU if available
+    #         optimizer.zero_grad() # Zero the gradients
+    #         outputs = model(utils.normalize_batch(images)) # Forward pass
+    #         loss = criterion(outputs, labels) # Compute loss
+    #         loss.backward() # Backward pass
+    #         optimizer.step() # Update weights
+    #         # Calculate training accuracy
+    #         _, predicted = torch.max(outputs.data, 1)
+    #         training_correct += (predicted == labels).sum().item()
 
-    # Compute padding (left, top, right, bottom)
-    pad_left   = (target_size - new_w) // 2
-    pad_right  = target_size - new_w - pad_left
-    pad_top    = (target_size - new_h) // 2
-    pad_bottom = target_size - new_h - pad_top
+    #     print(f'Clean Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, Accuracy: {100 * training_correct / len(train_dataset):.2f}%')
+    # torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth'))
+    # print("Clean training complete. Model saved as resnet18_gtsrb_clean.pth")
 
-    # Apply padding
-    img = F.pad(img, padding=[pad_left, pad_top, pad_right, pad_bottom], fill=fill)
+    
+    # Adversarial training with input-level PGD (for comparison)
+    model = utils.ResNet18_L3(num_classes=num_classes).to(device)
+    model.load_state_dict(torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth')))
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    epochs = 15
+    lambda_clean = 1 / 2
+    lambda_input_adv = 1 / 2
+    for epoch in range(epochs):
+        training_correct = 0
+        model.train() 
+        for images, labels in train_loader:
+            images = images.to(device)
+            labels = labels.to(device)
 
-    return img
+            clean_outputs = model(utils.normalize_batch(images))
+            clean_loss = criterion(clean_outputs, labels)
+
+            # Generate adversarial batch
+            adv_input_images = utils.generate_adversarial_batch(
+                model=model,
+                images=images,
+                labels=labels,
+                attack="PGD",
+                device=device,
+                epsilon=8/255.0,
+                alpha=2/255.0,
+                num_steps=10,
+                criterion=criterion
+            )
+
+            # Forward on adversarial examples
+            adv_input_outputs = model(utils.normalize_batch(adv_input_images))
+            adv_input_loss = criterion(adv_input_outputs, labels)
+
+            
+            # 3. Compute loss and update weights
+            loss = (lambda_clean * clean_loss) + (lambda_input_adv * adv_input_loss) 
+            optimizer.zero_grad()
+            
+            loss.backward()
+            optimizer.step()
+
+            # 4. Accuracy (input-adv training accuracy)
+            _, predicted = torch.max(adv_input_outputs.data, 1)
+            training_correct += (predicted == labels).sum().item()
+
+        print(f'Input-PGD Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, '
+          f'Accuracy: {100 * training_correct / len(train_dataset):.2f}%')
+
+    torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb_input_adv.pth'))
+    print("Saved input-PGD robust model.")
 
 
-class GTSRBDataset(Dataset):
-    def __init__(self, images, labels, target_size=224):
-        self.images = images
-        self.labels = labels
-        self.target_size = target_size
+    # Adversarial training with latent-PGD (for comparison)
+    model = utils.ResNet18_L3(num_classes=num_classes).to(device)
+    model.load_state_dict(torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth')))
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
-        self.mean = torch.tensor([0.485, 0.456, 0.406]).view(3,1,1)
-        self.std  = torch.tensor([0.229, 0.224, 0.225]).view(3,1,1)
+    epochs = 15
+    epsilon = 0.2
+    lambda_latent_adv = 1 / 2   
+    lambda_clean = 1 / 2
 
-    def __getitem__(self, idx):
-        img = self.images[idx]
-        label = int(self.labels[idx])
+    for epoch in range(epochs):
+        training_correct = 0
+        model.train() 
+        for images, labels in train_loader:
+            images = images.to(device)
+            labels = labels.to(device)
 
-        img = (
-            torch.from_numpy(img.copy())
-            .permute(2, 0, 1)
-            .float()
-            / 255.0
-        )
+            clean_outputs = model(utils.normalize_batch(images))
+            clean_loss = criterion(clean_outputs, labels)
 
-        img = letterbox_resize(img, self.target_size)
-        img = (img - self.mean) / self.std
+            # 1. Generate latent adversarial representation
+            z_adv = utils.pgd_attack_latent_l3(
+                model=model,
+                image=images,
+                label=labels,
+                epsilon=epsilon,#not adding same pixel-level perturbation, but only latent-level perturbation
+                alpha=(epsilon / 4.0),
+                num_steps=5,
+                criterion=criterion,
+                device=device
+            )
 
-        return img, label
+            # 2. Forward pass using latent adversarial input
+            adv_latent_outputs = model.decode(z_adv)
+            adv_latent_loss = criterion(adv_latent_outputs, labels)
 
-    def __len__(self):
-        return len(self.images)
+            # 3. Compute loss and update weights
+            loss = (lambda_clean * clean_loss) + (lambda_latent_adv * adv_latent_loss)
+            optimizer.zero_grad()
+            
+            loss.backward()
+            optimizer.step()
 
+            # 4. Accuracy (latent-adv training accuracy)
+            _, predicted = torch.max(adv_latent_outputs.data, 1)
+            training_correct += (predicted == labels).sum().item()
 
-print("Reading training data")
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-path = os.path.join(BASE_DIR, 'GTSRB/Training/Final_Training/Images')
-trainImages, trainLabels = readTrafficSigns(path) #39209, 39209
+        print(f'Latent-PGD Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, '
+        f'Accuracy: {100 * training_correct / len(train_dataset):.2f}%')
 
-###############################################
-#Preprocess the images and labels for training#
-train_dataset = GTSRBDataset(trainImages, trainLabels, target_size=224)
-print(f"Total training samples: {len(train_dataset)}")
-print(f"Example image shape after preprocessing: {train_dataset[0][0].shape}, label: {train_dataset[0][1]}")
+    torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb_latent_adv.pth'))
+    print("Saved latent-PGD robust model.")
 
-#Use the batch size of 32 or 64 for training
-batch_size_train = 32
-train_loader = DataLoader(train_dataset, batch_size=batch_size_train, shuffle=True)
+     # # Adversarial training with latent-PGD and input-level PGD (for comparison)
+    model = utils.ResNet18_L3(num_classes=num_classes).to(device)
+    model.load_state_dict(torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth')))
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
-#Initialization of the model, loss function, and optimizer
-# Load the pre-trained ResNet-18 model with imagenet weights
-weights = ResNet18_Weights.DEFAULT
-model = resnet18(weights=weights) 
-# Take care of input and output dimensions for the model
-# GTSRB has 43 classes
-num_classes = 43
-# Modify the model.fc layer to output 43 classes using nn.linear
-# for ResNet-18, the input features to the final layer is 512
-# Loss function and optimizer: CrossEntropyLoss and Adam
-model.fc = nn.Linear(model.fc.in_features, num_classes)
+    epochs = 15
+    epsilon = 0.2
+    lambda_latent_adv = 1 / 3   
+    lambda_clean = 1 / 3
+    lambda_input_adv = 1 / 3
+    for epoch in range(epochs):
+        training_correct = 0
+        model.train() 
+        for images, labels in train_loader:
+            images = images.to(device)
+            labels = labels.to(device)
 
-criterion = nn.CrossEntropyLoss()
-# Try different learning rates like 0.01, 0.1, etc.
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001) 
+            clean_outputs = model(utils.normalize_batch(images))
+            clean_loss = criterion(clean_outputs, labels)
 
-epochs = 5
-for epoch in range(epochs):
-    model.train()
-    for images, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-    print(f'Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}')
+            # Generate adversarial batch
+            adv_input_images = utils.generate_adversarial_batch(
+                model=model,
+                images=images,
+                labels=labels,
+                attack="PGD",
+                device=device,
+                epsilon=8/255.0,
+                alpha=2/255.0,
+                num_steps=10,
+                criterion=criterion
+            )
 
-torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb.pth'))
-print("Training complete. Model saved as resnet18_gtsrb.pth")
+            # Forward on adversarial examples
+            adv_input_outputs = model(utils.normalize_batch(adv_input_images))
+            adv_input_loss = criterion(adv_input_outputs, labels)
 
+            # 1. Generate latent adversarial representation
+            z_adv = utils.pgd_attack_latent_l3(
+                model=model,
+                image=images,
+                label=labels,
+                epsilon=epsilon,#not adding same pixel-level perturbation, but only latent-level perturbation
+                alpha=(epsilon / 4.0),
+                num_steps=5,
+                criterion=criterion,
+                device=device
+            )
+
+            # 2. Forward pass using latent adversarial input
+            adv_latent_outputs = model.decode(z_adv)
+            adv_latent_loss = criterion(adv_latent_outputs, labels)
+
+            # 3. Compute loss and update weights
+            loss = (lambda_clean * clean_loss) + (lambda_input_adv * adv_input_loss) + (lambda_latent_adv * adv_latent_loss)
+            optimizer.zero_grad()
+            
+            loss.backward()
+            optimizer.step()
+
+            # 4. Accuracy (input-adv training accuracy)
+            _, predicted = torch.max(adv_input_outputs.data, 1)
+            training_correct += (predicted == labels).sum().item()
+
+        print(f'Input-PGD Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, '
+          f'Accuracy: {100 * training_correct / len(train_dataset):.2f}%')
+
+    torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb_input_latent_adv.pth'))
+    print("Saved input-latent-PGD robust model.")
+
+if __name__ == "__main__":    
+    main()
