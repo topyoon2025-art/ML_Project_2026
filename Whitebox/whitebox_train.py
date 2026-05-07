@@ -15,12 +15,13 @@ import torchvision.transforms.functional as F
 from torch.utils.data import Dataset
 import os
 import utils
+import pickle
 
 def main():
     print("Reading training data...")
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(BASE_DIR, 'GTSRB/Training/Final_Training/Images')
-    trainImages, trainLabels = utils.readTrafficSigns_train(path) #39209, 39209
+    with open("gtsrb_cache.pkl", "rb") as f:
+        trainImages, trainLabels = pickle.load(f)
 
     ###############################################
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,27 +53,27 @@ def main():
     # Adam optimizer with weight decay for regularization 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
 
-    epochs = 20
+    epochs = 10
+    for epoch in range(epochs):
+        training_correct = 0
+        model.train() # Set model to training mode
+        for images, labels in train_loader:
+            images = images.to(device) # Send to GPU if available
+            labels = labels.to(device) # Send to GPU if available
+            optimizer.zero_grad() # Zero the gradients
+            outputs = model(utils.normalize_batch(images)) # Forward pass
+            loss = criterion(outputs, labels) # Compute loss
+            loss.backward() # Backward pass
+            optimizer.step() # Update weights
+            # Calculate training accuracy
+            _, predicted = torch.max(outputs.data, 1)
+            training_correct += (predicted == labels).sum().item()
 
-    # for epoch in range(epochs):
-    #     training_correct = 0
-    #     model.train() # Set model to training mode
-    #     for images, labels in train_loader:
-    #         images = images.to(device) # Send to GPU if available
-    #         labels = labels.to(device) # Send to GPU if available
-    #         optimizer.zero_grad() # Zero the gradients
-    #         outputs = model(utils.normalize_batch(images)) # Forward pass
-    #         loss = criterion(outputs, labels) # Compute loss
-    #         loss.backward() # Backward pass
-    #         optimizer.step() # Update weights
-    #         # Calculate training accuracy
-    #         _, predicted = torch.max(outputs.data, 1)
-    #         training_correct += (predicted == labels).sum().item()
+        print(f'Clean Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, Accuracy: {100 * training_correct / len(train_dataset):.2f}%')
+    torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth'))
+    print("Clean training complete. Model saved as resnet18_gtsrb_clean.pth")
 
-    #     print(f'Clean Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, Accuracy: {100 * training_correct / len(train_dataset):.2f}%')
-    # torch.save(model.state_dict(), os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth'))
-    # print("Clean training complete. Model saved as resnet18_gtsrb_clean.pth")
-
+    
     
     # Adversarial training with input-level PGD (for comparison)
     model = utils.ResNet18_L3(num_classes=num_classes).to(device)

@@ -1,4 +1,6 @@
 #resnet18 for classification
+from cProfile import label
+
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torchvision.models import resnet18, ResNet18_Weights
@@ -33,7 +35,8 @@ class GTSRBDataset(Dataset):
 
         img = letterbox_resize(img, self.target_size)
 
-        return img, label
+        return img, torch.tensor(label, dtype=torch.long)
+        #return img, label
 
     def __len__(self):
         return len(self.images)
@@ -94,7 +97,7 @@ def readTrafficSigns_train(rootpath):
         next(gtReader) # skip header
         # loop over all images in current annotations file
         for row in gtReader:
-            images.append(cv2.imread(os.path.join(prefix, row[0]))) # the 1th column is the filename
+            images.append(cv2.imread(os.path.join(prefix, row[0])).copy()) # the 1th column is the filename
             labels.append(row[7]) # the 8th column is the label
         gtFile.close()
     return images, labels
@@ -293,8 +296,13 @@ def evaluate_adversarial_accuracy(model, adv_loader, device):
     model.eval()
 
     predictions_adv = []
+    wrong_indices = []
+    wrong_true_labels = []
+    wrong_pred_labels = []
+
     correct_adv = 0
     total_adv = 0
+    idx_offset = 0
 
     with torch.no_grad():
         for imgs_adv, labels_adv in adv_loader:
@@ -307,12 +315,20 @@ def evaluate_adversarial_accuracy(model, adv_loader, device):
             correct_adv += (predicted == labels_adv).sum().item()
             total_adv += labels_adv.size(0)
 
+            wrong_mask = predicted.ne(labels_adv)
+            wrong_idx  = wrong_mask.nonzero(as_tuple=True)[0]
+
+            wrong_indices.extend((wrong_idx + idx_offset).tolist())
+            wrong_true_labels.extend(labels_adv[wrong_idx].cpu().tolist())
+            wrong_pred_labels.extend(predicted[wrong_idx].cpu().tolist())
+
             predictions_adv.append(predicted.detach().cpu())
+            idx_offset += labels_adv.size(0)
 
     predictions_adv = torch.cat(predictions_adv, dim=0)
     adv_accuracy = correct_adv / total_adv
 
-    return adv_accuracy, predictions_adv
+    return adv_accuracy, predictions_adv, wrong_indices, wrong_true_labels, wrong_pred_labels
 
 def compute_attack_success_rate(predictions_clean, predictions_adv, true_labels):
     successful_attacks = 0

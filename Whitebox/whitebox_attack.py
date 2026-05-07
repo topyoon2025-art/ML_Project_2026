@@ -65,7 +65,7 @@ def main():
     elif args.input_adv:
         state = torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb_input_adv.pth'), map_location=device)
     else:
-        state = torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb_clean.pth'), map_location=device)
+        state = torch.load(os.path.join(BASE_DIR, 'resnet18_gtsrb_clean_20.pth'), map_location=device)
 
     model.load_state_dict(state)
 
@@ -121,12 +121,15 @@ def main():
             num_workers=num_workers,
             pin_memory=False
         )
-        adv_accuracy, predictions_adv = utils.evaluate_adversarial_accuracy(
+        adv_accuracy, predictions_adv, wrong_indices, wrong_true_labels, wrong_pred_labels = utils.evaluate_adversarial_accuracy(
             model,
             adv_loader,
             device
         )
         print(f"Adversarial accuracy: {adv_accuracy * 100:.2f}%")
+        print(f"Number of wrong predictions: {len(wrong_indices)}")
+        for i in range(min(10, len(wrong_indices))):
+            print(f"Index {wrong_indices[i]}: true={wrong_true_labels[i]}, pred={wrong_pred_labels[i]}")
 
         # Attack Success Rate
         asr, successful, initially_correct = utils.compute_attack_success_rate(
